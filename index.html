@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Auth + Email 2FA</title>
+  <link rel="icon" href="src/favicon.svg" type="image/svg+xml" sizes="any" />
+  <link rel="stylesheet" href="src/styles.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="card" id="authCard" aria-label="Authentication">
+      <div class="brand" aria-hidden="true">
+        <div class="brand__ring"></div>
+        <div class="brand__mark"></div>
+      </div>
+
+      <h1 class="title" id="title">Welcome</h1>
+      <p class="subtitle" id="subtitle">Create an account or sign in.</p>
+      <p class="status isHidden" id="status" role="status" aria-live="polite"></p>
+
+      <div class="tabs" id="authTabs" aria-label="Authentication tabs">
+        <button type="button" class="tab isActive" id="tabSignIn">Sign in</button>
+        <button type="button" class="tab" id="tabSignUp">Sign up</button>
+      </div>
+
+      <form class="form" id="signInForm" autocomplete="on">
+        <div class="field">
+          <label class="label" for="signInEmail">Email</label>
+          <input class="input" id="signInEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+        </div>
+
+        <div class="field">
+          <label class="label" for="signInPassword">Password</label>
+          <input class="input" id="signInPassword" type="password" autocomplete="current-password" placeholder="Your password" required />
+        </div>
+
+        <div class="emailRow isHidden" id="signInSendRow" aria-label="Send sign-in code">
+          <div class="hint" id="signIn2faHint">Email code required (2FA enabled).</div>
+          <button type="button" class="btn btn--primary emailRow__send" id="signInSendBtn">Send code</button>
+        </div>
+
+        <fieldset class="otp isHidden" id="signInOtpFieldset" aria-label="Sign-in verification code">
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 1" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 2" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 3" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 4" />
+        </fieldset>
+
+        <fieldset class="otp isHidden" id="signInTotpFieldset" aria-label="Authenticator code">
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 1" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 2" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 3" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 4" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 5" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 6" />
+        </fieldset>
+
+        <div class="field isHidden" id="signInBackupRow" aria-label="Backup code">
+          <label class="label" for="signInBackupCode">Backup code</label>
+          <input class="input" id="signInBackupCode" type="text" autocomplete="one-time-code" placeholder="ABCDE-FGHIJ-KLMNO" />
+          <div class="hint">Use one of your downloaded one-time backup codes.</div>
+        </div>
+
+        <p class="resend isHidden" id="signInBackupChoiceRow">
+          Or <button type="button" class="link" id="signInUseBackupBtn">use a backup code</button>.
+        </p>
+
+        <p class="resend isHidden" id="signInPrimaryChoiceRow">
+          Using backup code. <button type="button" class="link" id="signInUsePrimaryBtn">Use the other code instead</button>.
+        </p>
+
+        <p class="resend isHidden" id="signInResendRow">
+          Didn’t get a code? <button type="button" class="link" id="signInResendBtn">Click to resend.</button>
+        </p>
+
+        <p class="resend">
+          <button type="button" class="link" id="forgotOpenBtn">Forgot password?</button>
+        </p>
+
+        <div class="actions">
+          <button type="button" class="btn btn--ghost" id="signInResetBtn">Reset</button>
+          <button type="submit" class="btn btn--primary" id="signInBtn">Sign in</button>
+        </div>
+      </form>
+
+      <form class="form isHidden" id="forgotForm" autocomplete="on">
+        <div class="field">
+          <label class="label" for="forgotEmail">Email</label>
+          <input class="input" id="forgotEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+          <div class="hint">We will send a 4-digit code to this email.</div>
+        </div>
+
+        <div class="emailRow" aria-label="Send reset code">
+          <div class="hint">Email verification</div>
+          <button type="button" class="btn btn--primary emailRow__send" id="forgotSendBtn" disabled>Send code</button>
+        </div>
+
+        <fieldset class="otp isHidden" id="forgotOtpFieldset" aria-label="Reset verification code">
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 1" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 2" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 3" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 4" />
+        </fieldset>
+
+        <p class="resend isHidden" id="forgotResendRow">
+          Didn’t get a code? <button type="button" class="link" id="forgotResendBtn">Click to resend.</button>
+        </p>
+
+        <div class="field">
+          <label class="label" for="forgotNewPassword">New password</label>
+          <input class="input" id="forgotNewPassword" type="password" autocomplete="new-password" placeholder="Create a new password" required />
+          <div class="hint">Must be at least 6 characters.</div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="forgotNewPassword2">Confirm new password</label>
+          <input class="input" id="forgotNewPassword2" type="password" autocomplete="new-password" placeholder="Confirm new password" required />
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn--ghost" id="forgotBackBtn">Back</button>
+          <button type="submit" class="btn btn--primary" id="forgotResetBtn">Reset password</button>
+        </div>
+      </form>
+
+      <form class="form isHidden" id="signUpForm" autocomplete="on">
+        <div class="field">
+          <label class="label" for="signUpName">UserName</label>
+          <input class="input" id="signUpName" type="text" autocomplete="name" placeholder="Your name" required />
+        </div>
+
+        <div class="field">
+          <label class="label" for="signUpUnique">Unique UserName</label>
+          <input class="input" id="signUpUnique" type="text" autocomplete="off" placeholder="unique-username" required />
+          <div class="hint" id="uniqueHint">Auto-suggested from your name. Must be unique.</div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="signUpPhone">Phone number</label>
+          <input class="input" id="signUpPhone" type="tel" autocomplete="tel" placeholder="e.g. 9876543210" required />
+        </div>
+
+        <div class="emailRow" aria-label="Email">
+          <input class="emailRow__input" id="signUpEmail" type="email" placeholder="Enter your email" autocomplete="email" required />
+          <button type="button" class="btn btn--primary emailRow__send" id="signUpSendBtn" disabled>Send code</button>
+        </div>
+
+        <fieldset class="otp isHidden" id="signUpOtpFieldset" aria-label="Email verification code">
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 1" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 2" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 3" />
+          <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 4" />
+        </fieldset>
+
+        <p class="resend isHidden" id="signUpResendRow">
+          Didn’t get a code? <button type="button" class="link" id="signUpResendBtn">Click to resend.</button>
+        </p>
+
+        <div class="field">
+          <label class="label" for="signUpPass">Password</label>
+          <input class="input" id="signUpPass" type="password" autocomplete="new-password" placeholder="Create a password" required />
+        </div>
+
+        <div class="field">
+          <label class="label" for="signUpPass2">Confirm Password</label>
+          <input class="input" id="signUpPass2" type="password" autocomplete="new-password" placeholder="Confirm password" required />
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn--ghost" id="signUpResetBtn">Reset</button>
+          <button type="submit" class="btn btn--primary" id="signUpBtn">Create account</button>
+        </div>
+      </form>
+
+      <section class="form isHidden" id="dashboard" aria-label="Account dashboard">
+        <div class="dash">
+          <div id="dashboardSecurity">
+            <div class="dash__welcome" id="welcome">Welcome!</div>
+
+            <div class="dash__row">
+              <div>
+                <div class="dash__title">2FA</div>
+                <div class="dash__desc">Email verification (4-digit code).</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="twoFaToggle" />
+                <span class="switch__track" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div class="dash__row">
+              <div>
+                <div class="dash__title">Authenticator</div>
+                <div class="dash__desc">TOTP authenticator app (6-digit codes).</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="totpToggle" />
+                <span class="switch__track" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div class="dash__row">
+              <div>
+                <div class="dash__title">Backup codes</div>
+                <div class="dash__desc">One-time codes you can download.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="backupCodesToggle" />
+                <span class="switch__track" aria-hidden="true"></span>
+              </label>
+            </div>
+
+            <div class="dash__panel isHidden" id="backupCodesPanel" aria-label="Backup codes details">
+              <div class="hint" id="backupCodesRemaining">10 backup codes remaining</div>
+              <div class="hint" id="backupCodesCreated">Created 0 days ago</div>
+              <div class="actions actions--1">
+                <button type="button" class="btn btn--primary" id="backupCodesDownloadBtn">Download codes</button>
+              </div>
+            </div>
+
+            <div class="dash__row" id="openAccountSettingsRow" aria-label="Account settings option">
+              <div>
+                <div class="dash__title">Account settings</div>
+                <div class="dash__desc">Update your profile details and password.</div>
+              </div>
+              <button type="button" class="link" id="openAccountSettingsBtn">Open</button>
+            </div>
+
+            <div class="actions">
+              <button type="button" class="btn btn--ghost" id="signOutBtn">Sign out</button>
+            </div>
+          </div>
+
+          <div class="isHidden" id="dashboardAccount">
+            <div class="dash__settingsHeader" aria-label="Account settings header">
+              <button type="button" class="btn btn--ghost dash__settingsBack" id="accountSettingsBackBtn">Back</button>
+              <div class="dash__settingsTitleWrap">
+                <div class="dash__settingsTitle">Account settings</div>
+                <div class="dash__settingsDesc">Update your profile details and password.</div>
+              </div>
+            </div>
+
+            <div class="dash__panel dash__settingsPanel" aria-label="Account settings">
+              <div class="dash__section">
+                <div class="dash__sectionTitle">Profile</div>
+                <div class="dash__sectionDesc">Update your public profile details.</div>
+
+                <div class="dash__formGrid" aria-label="Profile fields">
+                  <div class="field">
+                    <label class="label" for="acctUsername">UserName</label>
+                    <input class="input" id="acctUsername" type="text" autocomplete="name" />
+                  </div>
+
+                  <div class="field">
+                    <label class="label" for="acctUnique">Unique UserName (lowercase letters, numbers, hyphens only.)</label>
+                    <input class="input" id="acctUnique" type="text" autocomplete="off" placeholder="sagar-biswas" />
+                  </div>
+
+                  <div class="field">
+                    <label class="label" for="acctPhone">Phone</label>
+                    <input class="input" id="acctPhone" type="tel" autocomplete="tel" placeholder="e.g. 9876543210" />
+                  </div>
+
+                  <div class="field">
+                    <label class="label" for="acctEmail">Email</label>
+                    <input class="input" id="acctEmail" type="email" autocomplete="email" />
+                  </div>
+                </div>
+
+                <div class="actions actions--1">
+                  <button type="button" class="btn btn--primary" id="acctSaveBtn">Update profile</button>
+                </div>
+              </div>
+
+              <div class="dash__divider" role="separator" aria-hidden="true"></div>
+
+              <div class="dash__section">
+                <div class="dash__sectionTitle">Change password</div>
+                <div class="dash__sectionDesc">You must enter your current password.</div>
+
+                <div class="dash__formGrid" aria-label="Password fields">
+                  <div class="field">
+                    <label class="label" for="acctCurrentPassword">Current password</label>
+                    <input class="input" id="acctCurrentPassword" type="password" autocomplete="current-password" />
+                  </div>
+
+                  <div class="field">
+                    <label class="label" for="acctNewPassword">New password</label>
+                    <input class="input" id="acctNewPassword" type="password" autocomplete="new-password" />
+                  </div>
+
+                  <div class="field dash__span2">
+                    <label class="label" for="acctNewPassword2">Confirm new password</label>
+                    <input class="input" id="acctNewPassword2" type="password" autocomplete="new-password" />
+                  </div>
+                </div>
+
+                <div class="actions actions--1">
+                  <button type="button" class="btn btn--primary" id="acctPasswordBtn">Update password</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal isHidden" id="totpModal" role="dialog" aria-modal="true" aria-labelledby="totpModalTitle">
+    <div class="modal__backdrop" id="totpModalBackdrop" aria-hidden="true"></div>
+    <div class="modal__panel" role="document">
+      <h2 class="modal__title" id="totpModalTitle">Enable authenticator</h2>
+      <p class="modal__desc" id="totpModalDesc">Scan the QR code with your authenticator app, then enter the 6-digit code.</p>
+
+      <div class="modal__qrWrap" id="totpQrWrap">
+        <img class="modal__qr" id="totpQrImg" alt="Authenticator QR code" />
+        <div class="hint" id="totpQrHint">If you can’t scan, use the secret below for manual setup.</div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="totpModalSecret">Secret (Base32)</label>
+        <input class="input" id="totpModalSecret" type="text" readonly placeholder="Loading..." />
+        <div class="hint" id="totpModalSecretHint"></div>
+      </div>
+
+      <fieldset class="otp" id="totpModalOtpFieldset" aria-label="Authenticator code">
+        <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 1" />
+        <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 2" />
+        <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 3" />
+        <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 4" />
+        <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 5" />
+        <input class="otp__input" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="Digit 6" />
+      </fieldset>
+
+      <div class="actions actions--3">
+        <button type="button" class="btn btn--ghost" id="totpModalCancelBtn">Cancel</button>
+        <button type="button" class="btn btn--ghost" id="totpModalResetBtn">Hard reset</button>
+        <button type="button" class="btn btn--primary" id="totpModalEnableBtn">Enable</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="src/app.js" defer></script>
+</body>
+</html>

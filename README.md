@@ -34,7 +34,7 @@ A beginner-friendly authentication project that **looks like a real app**, but s
 
 ### Account Setting
 
-![](https://imgur.com/jAkgOl8.png)
+![](.png)
 
 This repo demonstrates:
 
@@ -102,7 +102,7 @@ In `.env`:
 - `SMTP_USER` = your Gmail address
 - `SMTP_PASS` = a **Gmail App Password** (not your normal password)
 
-### **_Note: Gmail App Password_**
+### **_Note -- Gmail App Password_**
 
 #### Step-1: Turn on 2-Step Verification
 
@@ -146,7 +146,7 @@ If `qrcode` isn’t installed, QR endpoints respond with `qrDataUrl: null` (and 
 
 ---
 
-## 4) What You’ll See in the UI
+## 4) What You’ll See in the UI (Beginner Walkthrough)
 
 ### A) Sign up (Email verification)
 
@@ -164,20 +164,20 @@ Notes:
 ### B) Sign in (Password + optional 2FA)
 
 1. Enter email + password
-2. If we enabled verification/s method(max 2 method can be enabled), we’ll be asked to complete one of:
+2. If you enabled a verification method, you’ll be asked to complete one of:
    - Email OTP (4 digits)
    - Authenticator TOTP (6 digits)
    - Backup code (one-time)
 
 ### C) Dashboard
 
-After sign-in we can toggle:
+After sign-in you can toggle:
 
 - **2FA (Email)**
 - **Authenticator (TOTP)**
 - **Backup codes**
 
-We can also open **Account settings**.
+You can also open **Account settings**.
 
 ### D) Account settings
 

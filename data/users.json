@@ -1,0 +1,31 @@
+{
+  "users": [
+    {
+      "id": "544b1b04-9e07-44cd-a24f-e83b11b0c869",
+      "username": "Shisher Biswas",
+      "uniqueUsername": "shisher-biswas",
+      "phone": "+880172731077",
+      "email": "sagarbiswas.sb0@gmail.com",
+      "passwordHash": "9a900403ac313ba27a1bc81f0932652b8020dac92c234d98fa0b06bf0040ecfd",
+      "twoFactorEnabled": true,
+      "twoFactorMode": "email",
+      "totpSecret": "LRZ2HYOPIMZDVMLHYEX5T7CAB7ZUOV4N",
+      "backupCodes": {
+        "createdAt": "2025-12-25T07:36:29.052Z",
+        "hashes": [
+          "86da81f9e6cc6105e0ffebc2e4f5da268716d0ffb5a24471037473d2ff375a22",
+          "cf960d8da683a5623fa16f4061323e393774e11cbc02be04765c52585fd39f6b",
+          "58d826dfbd3bff7e996bfb8f8637e27499e4d81ab26ef20b8719b39cfefb6de6",
+          "dd8d187def203ae188bd7d31b5c847ecbb7b792ade3768a273b98b06f5d0352a",
+          "4e5f51c2f2dfb40e31fb559b1aef46bc79cbf71d0fd298e92b79d93678beb9c1",
+          "44425e0adb3ebd6985fb393869a39105ea22492518979a4f216d1addff2ea395",
+          "969341376ff9ff3edd3261395409ca3b9e5e518a1ba28c4fd3bf55248ffd48f0",
+          "63d0aede138962e80da867770a7e8ddecda5ac28b21ebbf020492b589dcd6d58",
+          "4586aace2a0ed92f95481812a762d86ed436319f233628fddae8c1581fcc5072",
+          "08ce688787c6d5a058040ab579dd66e962833f5089d0a01046ed052c622a4344"
+        ]
+      },
+      "createdAt": "2025-12-24T18:24:08.878Z"
+    }
+  ]
+}
