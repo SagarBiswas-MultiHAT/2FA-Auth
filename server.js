@@ -1,6 +1,7 @@
 const path = require("path");
 const crypto = require("crypto");
 const fs = require("fs");
+const https = require("https");
 
 require("dotenv").config();
 
@@ -526,6 +527,128 @@ const maskEmail = (email) => {
   return `${e[0]}***${e.slice(at)}`;
 };
 
+const parseNameAndEmail = (raw, fallbackEmail) => {
+  const r = String(raw || "").trim();
+  const fallback = String(fallbackEmail || "").trim();
+
+  if (isValidEmail(r)) return { name: "", email: r };
+
+  const lt = r.indexOf("<");
+  const gt = r.lastIndexOf(">");
+  if (lt !== -1 && gt !== -1 && gt > lt + 2) {
+    const inside = r.slice(lt + 1, gt).trim();
+    const name = r.slice(0, lt).trim().replace(/^"|"$/g, "");
+    if (isValidEmail(inside)) return { name, email: inside };
+  }
+
+  if (isValidEmail(fallback)) return { name: "", email: fallback };
+  return { name: "", email: "" };
+};
+
+const httpJson = ({ method, hostname, path, headers = {}, body, timeoutMs }) =>
+  new Promise((resolve, reject) => {
+    const data = body != null ? JSON.stringify(body) : "";
+    const req = https.request(
+      {
+        method,
+        hostname,
+        path,
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(data),
+          ...headers,
+        },
+      },
+      (res) => {
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => {
+          const text = Buffer.concat(chunks).toString("utf-8");
+          let json = null;
+          try {
+            json = text ? JSON.parse(text) : null;
+          } catch {
+            json = null;
+          }
+          resolve({
+            ok: res.statusCode >= 200 && res.statusCode < 300,
+            status: res.statusCode || 0,
+            json,
+            text,
+          });
+        });
+      }
+    );
+
+    if (timeoutMs) {
+      req.setTimeout(timeoutMs, () => {
+        req.destroy(new Error("Request timeout"));
+      });
+    }
+
+    req.on("error", reject);
+    req.write(data);
+    req.end();
+  });
+
+const canSendWithBrevo = () => {
+  const k = String(process.env.BREVO_API_KEY || "").trim();
+  return !!k;
+};
+
+const pickBrevoSender = () => {
+  const raw = String(
+    process.env.BREVO_FROM || process.env.MAIL_FROM || ""
+  ).trim();
+  const parsed = parseNameAndEmail(
+    raw,
+    String(process.env.SMTP_USER || "").trim()
+  );
+  // Brevo requires a sender email; name is optional.
+  // If name is empty, use a small default.
+  const email = parsed.email;
+  const name = parsed.name || "Email Verification Demo";
+  return { name, email };
+};
+
+const sendEmailBrevo = async ({ to, subject, text }) => {
+  const apiKey = String(process.env.BREVO_API_KEY || "").trim();
+  if (!apiKey) return { ok: false, status: 0, error: "BREVO_API_KEY missing" };
+
+  const sender = pickBrevoSender();
+  if (!sender.email) {
+    return {
+      ok: false,
+      status: 0,
+      error: "BREVO_FROM/MAIL_FROM missing or invalid",
+    };
+  }
+
+  const timeoutMs = parseNumber(process.env.BREVO_TIMEOUT_MS, 20_000);
+  const res = await httpJson({
+    method: "POST",
+    hostname: "api.brevo.com",
+    path: "/v3/smtp/email",
+    timeoutMs,
+    headers: {
+      "api-key": apiKey,
+      Accept: "application/json",
+    },
+    body: {
+      sender,
+      to: [{ email: to }],
+      subject,
+      textContent: text,
+    },
+  });
+
+  if (res.ok) return { ok: true, status: res.status };
+  const msg =
+    String(res?.json?.message || res?.json?.error || "").trim() ||
+    `Brevo request failed (${res.status})`;
+  return { ok: false, status: res.status, error: msg };
+};
+
 const getMailer = async () => {
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
@@ -600,6 +723,31 @@ const sendOtpEmail = async ({ email, purpose, req }) => {
 
   noteSend({ email, ip });
 
+  const subject = process.env.MAIL_SUBJECT || "Your verification code";
+  const text = `Your verification code is: ${code}\n\nThis code expires in 5 minutes.`;
+
+  // Prefer Brevo (HTTPS) when configured: avoids SMTP blocks on hosts
+  if (canSendWithBrevo()) {
+    try {
+      const b = await sendEmailBrevo({ to: email, subject, text });
+      if (b.ok) {
+        return {
+          ok: true,
+          status: 200,
+          payload: { ok: true, delivered: true },
+        };
+      }
+      console.warn(
+        "Brevo send failed; falling back to SMTP/debug:",
+        b.status,
+        b.error
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn("Brevo send failed; falling back to SMTP/debug:", msg);
+    }
+  }
+
   const transporter = await getMailer().catch(() => null);
   if (!transporter) {
     return {
@@ -632,8 +780,6 @@ const sendOtpEmail = async ({ email, purpose, req }) => {
   };
 
   const from = pickMailFrom();
-  const subject = process.env.MAIL_SUBJECT || "Your verification code";
-  const text = `Your verification code is: ${code}\n\nThis code expires in 5 minutes.`;
 
   await transporter.sendMail({ from, to: email, subject, text });
   return { ok: true, status: 200, payload: { ok: true, delivered: true } };
