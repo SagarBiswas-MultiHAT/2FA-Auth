@@ -1,8 +1,27 @@
 # Email Verification + 2FA Auth Demo (Vanilla JS + Node/Express)
 
-A beginner-friendly authentication project that **looks like a real app**, but stays small enough to understand in one sitting.
+A beginner-friendly authentication project that **feels like a real app**, but is still small enough to understand end-to-end.
 
-## Pictures
+This repo shows the complete auth story:
+
+- **Sign up** with email verification (4-digit OTP)
+- **Sign in** with optional 2FA:
+  - Email OTP (4 digits)
+  - Authenticator app (TOTP, 6 digits)
+  - Backup codes (10 one-time codes)
+- **Forgot password** (email OTP + reset)
+- **Account settings** (update profile + change password)
+
+It also includes small UX + “production-ish” details beginners usually miss:
+
+- Auto **Unique UserName** suggestion (slug from display name) on **Sign up** + **Account settings**
+- “Dirty guard”: if you manually edit Unique UserName, autosuggest stops overwriting it
+- OTP **resend** cooldown + simple rate limiting (API returns `retryAfter`)
+- “Instructor mode”: if email can’t be sent, the UI shows `debug_code` so you can keep learning
+
+---
+
+## Screenshots
 
 ### Sign-in
 
@@ -34,24 +53,7 @@ A beginner-friendly authentication project that **looks like a real app**, but s
 
 ### Account Setting
 
-![](.png)
-
-This repo demonstrates:
-
-- Email verification during **Sign up** (4‑digit OTP)
-- Sign in with **optional 2FA**:
-  - Email OTP (4 digits)
-  - Authenticator app **TOTP** (6 digits)
-  - **Backup codes** (10 one‑time codes)
-- **Forgot password** using email verification (4‑digit OTP)
-- **Account settings** after sign‑in:
-  - Update profile details (UserName, Unique UserName, phone, email)
-  - Change password (requires current password)
-- Small but important UX details:
-  - Auto **Unique UserName suggestion** (slug from name) on **Sign up** and **Account settings**
-  - Suggestion “dirty” guard: if you manually edit Unique UserName, it won’t keep overwriting your value
-  - Resend cooldown + rate‑limit response includes `retryAfter`
-  - “Debug OTP mode” for learning locally when SMTP isn’t configured
+![](https://imgur.com/jAkgOl8.png)
 
 ---
 
@@ -91,11 +93,57 @@ $env:PORT=3009; npm start
 
 ---
 
-## 2) Email Sending (SMTP) — Real vs Debug Mode
+## 2) Email Sending (Real Delivery vs Instructor Mode)
 
-This project tries to send OTPs via SMTP using Nodemailer.
+When you click **Send code**, the server generates a 4-digit OTP and tries to deliver it.
 
-### Real email (recommended)
+Delivery options (in order):
+
+1. **Brevo HTTPS API** (recommended for hosting)
+2. **SMTP** (works locally, but can be blocked by some hosts)
+3. **Instructor / Debug mode** (no email sent; the UI displays the OTP)
+
+### Provider fallback behavior (important)
+
+This is the exact fallback logic used by the server when sending OTP emails:
+
+1. If `BREVO_API_KEY` is set → **try Brevo first**
+2. If Brevo fails (or `BREVO_API_KEY` is missing) → **try SMTP**
+
+- SMTP is only attempted if **both** `SMTP_USER` and `SMTP_PASS` are set
+
+3. If SMTP fails (or is not configured) → **Instructor/Debug mode**
+
+- Response includes `delivered: false` and a `debug_code`
+
+If you’re asking “what happens if Brevo fails?” → the app will then try SMTP.
+
+#### How to force a provider (no code changes)
+
+- Force **Brevo-only**: set `BREVO_API_KEY`, and remove/empty `SMTP_USER` + `SMTP_PASS`
+- Force **SMTP-only**: remove/empty `BREVO_API_KEY`, and set `SMTP_USER` + `SMTP_PASS`
+
+If you want the opposite order (**SMTP → Brevo → Debug**), that requires a small change in `server.js`.
+
+### Recommended for hosting: Brevo (HTTPS API)
+
+Brevo works on platforms that block outbound SMTP.
+
+Required env var:
+
+- `BREVO_API_KEY`
+
+Recommended sender env var:
+
+- `MAIL_FROM` (example: `Email Verification Demo <your@gmail.com>`)
+  - The sender email must be verified in your Brevo account.
+
+Optional:
+
+- `BREVO_FROM` (if set, Brevo will prefer this sender)
+- `MAIL_SUBJECT` (custom subject)
+
+### SMTP (local-friendly option)
 
 In `.env`:
 
@@ -123,77 +171,82 @@ Optional:
 - `MAIL_FROM` (example: `Email Verification Demo <your@gmail.com>`)
 - `MAIL_SUBJECT`
 
-### Debug OTP mode (perfect for beginners)
+### Instructor / Debug OTP mode
 
-If SMTP isn’t configured (or fails), OTP endpoints return:
+If email isn’t configured (or delivery fails), OTP endpoints return:
 
 - `delivered: false`
 - `debug_code: "1234"`
 
-The frontend shows this code so you can continue learning without setting up email.
+The frontend shows this code so you can keep learning without setting up email.
 
 ---
 
-## 3) Optional: QR Codes for Authenticator Apps
+## 3) Deploy to Render (Beginner Steps)
 
-TOTP works even without QR generation (you can always copy the Base32 secret), but if you want QR images:
+Render does **not** want you to upload a `.env` file.
+Instead, copy env vars into Render:
 
-```bash
-npm i qrcode
-```
+1. Render Dashboard → your service → **Environment**
+2. Add your env vars (do **not** wrap values in quotes)
+3. Deploy
 
-If `qrcode` isn’t installed, QR endpoints respond with `qrDataUrl: null` (and `/api/totp/qr` returns 501).
+Template file you can use as a checklist:
+
+- `.envForRender.example`
+
+Important:
+
+- Don’t set `PORT` on Render (Render injects it automatically)
+- Never commit secrets (API keys, SMTP passwords)
 
 ---
 
-## 4) What You’ll See in the UI (Beginner Walkthrough)
+## 4) Beginner Walkthrough (What You’ll See)
 
-### A) Sign up (Email verification)
+### A) Sign up (email verification)
 
-1. Go to **Sign up**
+1. Open **Sign up**
 2. Enter **UserName**
-3. The app auto-suggests **Unique UserName** from your name (example: `sagar-biswas`)
-4. Enter email → click **Send code** → enter the 4-digit OTP
+3. The app auto-suggests a **Unique UserName** from your name (example: `sagar-biswas`)
+4. Enter email → **Send code** → enter the 4-digit OTP
 5. Create account
 
 Notes:
 
 - OTPs expire in ~5 minutes
-- Resend is rate-limited (you’ll see `retryAfter`)
+- OTP resend is rate-limited (API returns `retryAfter`)
 
-### B) Sign in (Password + optional 2FA)
+### B) Sign in (password + optional 2FA)
 
 1. Enter email + password
-2. If you enabled a verification method, you’ll be asked to complete one of:
+2. If you enabled a 2FA method, complete one of:
    - Email OTP (4 digits)
    - Authenticator TOTP (6 digits)
    - Backup code (one-time)
 
 ### C) Dashboard
 
-After sign-in you can toggle:
+After sign-in you can manage:
 
-- **2FA (Email)**
+- **2FA (Email OTP)**
 - **Authenticator (TOTP)**
 - **Backup codes**
-
-You can also open **Account settings**.
 
 ### D) Account settings
 
 - Update profile fields (including Unique UserName)
-- The Unique UserName can also be auto-suggested here
+- Unique UserName can be auto-suggested here too
   - If you type your own Unique UserName manually, suggestions won’t overwrite it
 - Change password requires your current password
 
 ### E) Forgot password
 
-From Sign in, click **Forgot password?**
-
-1. Enter your registered email
-2. Send code → enter 4-digit OTP
-3. Set a new password
-4. Any active sessions for that email are cleared (forces sign-in again)
+1. From Sign in, click **Forgot password?**
+2. Enter your registered email
+3. Send code → enter 4-digit OTP
+4. Set a new password
+5. Any active sessions for that email are cleared (forces sign-in again)
 
 ---
 
@@ -223,25 +276,24 @@ data/users.json
 
 ## 6) How It Works (Under the Hood)
 
-### OTP (Email codes)
+### OTP (email codes)
 
 - OTP is **4 digits**, TTL ~5 minutes
-- The server stores **only a hash** of the OTP in memory (`otpStore`)
-- OTP keys are scoped by purpose: `"signup:email"`, `"reset:email"`, etc.
+- Server stores **only a hash** of the OTP in memory (`otpStore`)
+- OTP entries are scoped by purpose (signup/reset/signin)
 - Attempts are limited (`MAX_ATTEMPTS`)
-- Send has cooldown and simple per-IP limits
+- Send has cooldown + simple per-IP limits
 
 ### Sessions
 
 - The server issues an HttpOnly cookie named `sid`
 - Session data is stored in memory (`sessions` Map)
-- This is intentionally simple for learning
 
 ### TOTP (Authenticator)
 
 - RFC 6238 style (SHA1, 30s step, 6 digits)
-- The server creates a Base32 secret and an `otpauth://` URI
-- QR generation is optional (see `qrcode` section)
+- Server creates a Base32 secret and an `otpauth://` URI
+- QR generation is supported (uses `qrcode`)
 
 ### Backup codes
 
@@ -321,10 +373,10 @@ Legacy / generic OTP helpers (used for learning / reuse):
 
 ### “API route not found”
 
-This usually means:
+Usually means:
 
 - you opened `index.html` directly (don’t), or
-- you started a different/older server on another port/folder
+- you started a different server from another folder/port
 
 Fix:
 
@@ -333,7 +385,7 @@ Fix:
 
 ### Port already in use
 
-If port is busy, set a different one:
+If the port is busy, set a different one:
 
 ```powershell
 $env:PORT=3009; npm start
@@ -341,39 +393,49 @@ $env:PORT=3009; npm start
 
 ### Email not sending
 
-- If you see `debug_code`, SMTP isn’t configured or failed — this is OK for learning.
-- For real delivery, use Gmail App Password and restart after editing `.env`.
+- If you see `debug_code`, delivery failed and the app switched to Instructor mode — this is OK for learning.
+- For real delivery on hosting, use **Brevo HTTPS** (`BREVO_API_KEY` + a verified sender).
+- For real delivery locally, use a Gmail App Password and restart after editing `.env`.
 
 ### No QR code for authenticator
 
-- Install `qrcode` (`npm i qrcode`), or
-- use manual setup with the Base32 secret shown in the modal
+- Ensure `qrcode` is installed (`npm i qrcode`), or
+- Use manual setup with the Base32 secret shown in the UI
 
 ---
 
-## 9) Production-Like Notes (What to Improve Before Real Deployment)
+## 9) Production-like polish (What this repo already does)
 
-This project is intentionally simple for learning. If you want to make it production-ready, here’s a high-value checklist:
+This is still a learning project, but it includes a few “real world” touches:
+
+- Disables `X-Powered-By`
+- Adds basic security/correctness headers
+- Avoids caching `/api/*` responses (OTP endpoints are `no-store`)
+- Stores OTPs as hashes (not plaintext)
+
+## 10) If you want to make it truly production-ready
+
+High-value checklist:
 
 - Password hashing: replace SHA-256 with **bcrypt / scrypt / Argon2**
-- Persistence: replace `data/users.json` with a real DB (Postgres, MySQL, MongoDB)
-- Sessions: store sessions in Redis / DB; set cookie `Secure` + `SameSite` (and use HTTPS)
+- Persistence: replace `data/users.json` with a real DB (Postgres/MySQL/MongoDB)
+- Sessions: store sessions in Redis/DB; use HTTPS; set cookie `Secure` + `SameSite`
 - CSRF protection (because cookies are used)
-- Logging + monitoring (and avoid leaking secrets in logs)
-- Email enumeration: forgot-password currently reveals “Email not registered” (consider returning a generic response)
-- Secret handling: protect TOTP secrets (at least encrypt-at-rest in a real system)
+- Logging + monitoring (and never leak secrets)
+- Email enumeration: consider making forgot-password always return a generic response
+- Protect TOTP secrets properly (encrypt-at-rest in a real system)
 
 ---
 
-## 10) Instructor Mode (Teaching Script + Exercises)
+## 11) Instructor Mode (Teaching Script + Exercises)
 
 ### A) 30–45 minute teaching flow
 
-1. Show Sign up with email OTP (explain OTP TTL + attempts)
+1. Show Sign up with email OTP (OTP TTL + attempts)
 2. Show Unique UserName auto-suggestion (slugifying + uniqueness)
 3. Sign in and explain sessions (HttpOnly cookie `sid`)
 4. Enable Email 2FA → sign out → sign in again → complete OTP
-5. Enable TOTP and explain `otpauth://` + 30s windows
+5. Enable TOTP and explain `otpauth://` + 30s window
 6. Enable backup codes and explain “one-time” behavior
 7. Show Account settings update + password change
 8. Show Forgot password flow + forced sign-out of active sessions
@@ -384,7 +446,4 @@ This project is intentionally simple for learning. If you want to make it produc
 2. Improve forgot-password to avoid email enumeration (always respond `ok: true`).
 3. Add `SameSite=Lax` cookie attribute in the session cookie helper.
 4. Replace password hashing with bcrypt.
-5. Add tests for:
-   - slug/Unique UserName validation
-   - OTP verify expiry + attempt limits
-   - backup code normalization
+5. Add tests for OTP expiry + attempt limits + backup code consumption.
