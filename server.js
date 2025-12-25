@@ -504,6 +504,20 @@ const randomOtp = () => {
 
 const sha256 = (value) => sha256Hex(value);
 
+const parseBool = (value, defaultValue) => {
+  if (value == null) return defaultValue;
+  const v = String(value).trim().toLowerCase();
+  if (!v) return defaultValue;
+  if (v === "1" || v === "true" || v === "yes" || v === "on") return true;
+  if (v === "0" || v === "false" || v === "no" || v === "off") return false;
+  return defaultValue;
+};
+
+const parseNumber = (value, defaultValue) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : defaultValue;
+};
+
 const getMailer = async () => {
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
@@ -512,14 +526,29 @@ const getMailer = async () => {
 
   // Gmail SMTP defaults; can be overridden via env
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
-  const port = Number(process.env.SMTP_PORT || 465);
-  const secure = String(process.env.SMTP_SECURE || "true") === "true";
+  const port = parseNumber(process.env.SMTP_PORT, 465);
+  const secure = parseBool(process.env.SMTP_SECURE, true);
+
+  // Render/free hosts sometimes have slower outbound connects; keep timeouts sane.
+  const connectionTimeout = parseNumber(
+    process.env.SMTP_CONNECTION_TIMEOUT_MS,
+    20_000
+  );
+  const greetingTimeout = parseNumber(
+    process.env.SMTP_GREETING_TIMEOUT_MS,
+    20_000
+  );
+  const socketTimeout = parseNumber(process.env.SMTP_SOCKET_TIMEOUT_MS, 20_000);
 
   const transporter = nodemailer.createTransport({
     host,
     port,
     secure,
     auth: { user, pass },
+    connectionTimeout,
+    greetingTimeout,
+    socketTimeout,
+    tls: { servername: host },
   });
 
   // Light sanity check (does not send)
