@@ -72,8 +72,39 @@ npm install
 
 ### Configure environment
 
-1. Copy `.env.example` → `.env`
-2. Optional: change `PORT` (default is `3000`)
+1. Create a `.env` file with:
+
+```
+# Copy to .env (DO NOT commit .env)
+# Gmail App Password recommended.
+
+BREVO_API_KEY=
+BREVO_FROM=""
+
+PORT=3000
+
+# SMTP settings (defaults are Gmail)
+SMTP_USER=
+SMTP_PASS=
+SMTP_HOST=
+SMTP_PORT=
+SMTP_SECURE=
+
+# Optional mail settings
+# MAIL_SUBJECT=
+
+# SMTP (Brevo relay) (alternative to HTTPS APIs)
+SMTP_HOST=
+SMTP_PORT=
+SMTP_SECURE=
+SMTP_USER=
+SMTP_PASS=
+
+# Sender address (should be a verified sender in Brevo)
+MAIL_FROM=
+```
+
+3. Optional: change `PORT` (default is `3000`)
 
 ### Run
 
@@ -447,3 +478,4 @@ High-value checklist:
 3. Add `SameSite=Lax` cookie attribute in the session cookie helper.
 4. Replace password hashing with bcrypt.
 5. Add tests for OTP expiry + attempt limits + backup code consumption.
+
