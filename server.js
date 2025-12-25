@@ -568,10 +568,21 @@ const sendOtpEmail = async ({ email, purpose, req }) => {
     const fallback = String(process.env.SMTP_USER || "").trim();
     if (!raw) return fallback;
 
-    // Very small validation: if it looks like a "Name <email>" address,
-    // ensure it has a closing '>' so nodemailer doesn't throw on a typo.
-    if (raw.includes("<") && !raw.includes(">")) return fallback;
-    return raw;
+    // Accept either:
+    // 1) plain email: someone@example.com
+    // 2) display form: "App Name <someone@example.com>"
+    // Anything else falls back to SMTP_USER to avoid invalid headers.
+    const looksLikeEmail = isValidEmail(raw);
+    if (looksLikeEmail) return raw;
+
+    const lt = raw.indexOf("<");
+    const gt = raw.lastIndexOf(">");
+    if (lt !== -1 && gt !== -1 && gt > lt + 2) {
+      const inside = raw.slice(lt + 1, gt).trim();
+      if (isValidEmail(inside)) return raw;
+    }
+
+    return fallback;
   };
 
   const from = pickMailFrom();
