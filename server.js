@@ -518,6 +518,14 @@ const parseNumber = (value, defaultValue) => {
   return Number.isFinite(n) ? n : defaultValue;
 };
 
+const maskEmail = (email) => {
+  const e = String(email || "").trim();
+  if (!e) return "";
+  const at = e.indexOf("@");
+  if (at <= 1) return e;
+  return `${e[0]}***${e.slice(at)}`;
+};
+
 const getMailer = async () => {
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
@@ -528,6 +536,7 @@ const getMailer = async () => {
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = parseNumber(process.env.SMTP_PORT, 465);
   const secure = parseBool(process.env.SMTP_SECURE, true);
+  const requireTLS = parseBool(process.env.SMTP_REQUIRE_TLS, !secure);
 
   // Render/free hosts sometimes have slower outbound connects; keep timeouts sane.
   const connectionTimeout = parseNumber(
@@ -548,8 +557,16 @@ const getMailer = async () => {
     connectionTimeout,
     greetingTimeout,
     socketTimeout,
+    requireTLS,
     tls: { servername: host },
   });
+
+  // Helpful on hosts like Render (does not log secrets)
+  console.log(
+    `SMTP config: host=${host} port=${port} secure=${secure} requireTLS=${requireTLS} user=${maskEmail(
+      user
+    )} pass=${pass ? "set" : "missing"}`
+  );
 
   // Light sanity check (does not send)
   try {
