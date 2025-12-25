@@ -102,7 +102,7 @@ In `.env`:
 - `SMTP_USER` = your Gmail address
 - `SMTP_PASS` = a **Gmail App Password** (not your normal password)
 
-### **_Note -- Gmail App Password_**
+### **_Note: Gmail App Password_**
 
 #### Step-1: Turn on 2-Step Verification
 
