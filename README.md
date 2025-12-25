@@ -34,7 +34,7 @@ A beginner-friendly authentication project that **looks like a real app**, but s
 
 ### Account Setting
 
-![](.png)
+![](https://imgur.com/jAkgOl8.png)
 
 This repo demonstrates:
 
