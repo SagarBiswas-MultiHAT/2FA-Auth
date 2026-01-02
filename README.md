@@ -21,7 +21,7 @@ It also includes small UX + “production-ish” details beginners usually miss:
 
 ---
 
-<details><summary><h2>## Screenshots/h2></summary>
+<details><summary><h2>Screenshots</h2></summary>
 
 ### Sign-in
 
@@ -54,6 +54,8 @@ It also includes small UX + “production-ish” details beginners usually miss:
 ### Account Setting
 
 ![](https://imgur.com/jAkgOl8.png)
+
+</details>
 
 ---
 
@@ -478,5 +480,6 @@ High-value checklist:
 3. Add `SameSite=Lax` cookie attribute in the session cookie helper.
 4. Replace password hashing with bcrypt.
 5. Add tests for OTP expiry + attempt limits + backup code consumption.
+
 
 
