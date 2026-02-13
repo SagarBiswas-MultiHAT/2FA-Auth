@@ -1,4 +1,6 @@
-# Email Verification + 2FA Auth Demo (Vanilla JS + Node/Express)
+# Email Verification + 2FA Auth Demo 
+
+(Vanilla JS + Node/Express)
 
 <div align="right">
 
