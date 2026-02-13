@@ -4,13 +4,13 @@
 
 ![Live](https://img.shields.io/website?url=https://twofa-auth-vwrs.onrender.com/) 
 &nbsp;
-![CI](https://github.com/SagarBiswas-MultiHAT/2FA-Auth/actions/workflows/node-ci.yml/badge.svg) 
+![CI](https://github.com/SagarBiswas-MultiHAT/Multi-FA-Auth/actions/workflows/node-ci.yml/badge.svg) 
 &nbsp;
 ![Node](https://img.shields.io/badge/node-18%2B-brightgreen) 
 &nbsp;
-![Last commit](https://img.shields.io/github/last-commit/SagarBiswas-MultiHAT/2FA-Auth) 
+![Last commit](https://img.shields.io/github/last-commit/SagarBiswas-MultiHAT/Multi-FA-Auth) 
 &nbsp;
-![Issues](https://img.shields.io/github/issues/SagarBiswas-MultiHAT/2FA-Auth)
+![Issues](https://img.shields.io/github/issues/SagarBiswas-MultiHAT/Multi-FA-Auth)
 
 </div>
 
